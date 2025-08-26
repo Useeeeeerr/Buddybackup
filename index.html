@@ -72,7 +72,40 @@
     const authSection = document.getElementById('auth-section');
     const mainSection = document.getElementById('main-section');
 
-    const CORS_PROXY = 'https://thingproxy.freeboard.io/fetch/';
+    const RAILWAY_API_URL = 'https://backboard.railway.app/graphql/v2';
+    const OUR_PROXY_URL = '/.netlify/functions/proxy'; // 우리만의 프록시 주소
+
+    // Railway API 호출 함수 (수정됨)
+    async function callRailwayAPI(query, token) {
+        try {
+            // 우리 프록시에 요청을 보냄
+            const response = await fetch(OUR_PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    railway_url: RAILWAY_API_URL,
+                    options: {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ query })
+                    }
+                })
+            });
+
+            if (!response.ok) { throw new Error(`HTTP 오류! 상태: ${response.status}`); }
+            const result = await response.json();
+            if (result.errors) { throw new Error(result.errors.map(e => e.message).join('\n')); }
+            return result.data;
+        } catch (error) {
+            updateStatus(`API 호출 실패: ${error.message}`);
+            throw error;
+        }
+    }
+
+// ... 나머지 스크립트 코드는 그대로 ...
     const RAILWAY_API_URL = 'https://backboard.railway.app/graphql/v2';
 
     // Railway API 호출 함수
